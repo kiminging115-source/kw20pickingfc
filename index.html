@@ -40,7 +40,10 @@ body{background:var(--gray-bg);min-height:100vh;}
 .topbar{background:#fff;height:52px;display:flex;align-items:center;padding:0 14px;gap:12px;
   box-shadow:0 1px 4px rgba(0,0,0,.08);position:sticky;top:0;z-index:50;}
 .topbar .tlogo{background:#D32F2F;color:#fff;font-weight:900;font-size:10px;padding:4px 5px;border-radius:3px;}
-.topbar .ttitle{font-size:15px;font-weight:600;color:var(--dark);flex:1;}
+.topbar .ttitle{font-size:15px;font-weight:600;color:var(--dark);flex:1;margin-left:4px;}
+.tb-icon{width:34px;height:34px;border:none;background:none;border-radius:6px;color:#37474F;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.tb-icon:hover{background:var(--gray-bg);}
+.tb-icon:active{background:#E3E8EF;}
 .user-chip{display:inline-flex;align-items:center;gap:6px;background:var(--gray-bg);border:1px solid var(--gray-border);
   border-radius:16px;padding:4px 12px 4px 5px;font-size:12px;font-weight:700;color:var(--dark);}
 .user-chip .uic{width:22px;height:22px;border-radius:50%;background:#F9A825;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;}
@@ -197,6 +200,12 @@ body{background:var(--gray-bg);min-height:100vh;}
 <div id="app">
   <div class="topbar">
     <span class="tlogo">DC<br>WMS</span>
+    <button class="tb-icon" id="btnBack" onclick="topBack()" title="Back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    </button>
+    <button class="tb-icon" onclick="topRefresh()" title="Refresh">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    </button>
     <span class="ttitle" id="topTitle">Full Case Picking</span>
     <span class="user-chip"><span class="uic">&#128100;</span><span id="userLbl"></span></span>
     <button class="logout-btn" onclick="doLogout()">Log out</button>
@@ -884,6 +893,31 @@ function toast(msg,isErr,ms){
   t.querySelector('.tk').innerHTML=isErr?'&#10005;':'&#10003;';
   clearTimeout(_tt);
   _tt=setTimeout(function(){t.className='';},ms||1600);
+}
+
+// ══════════ TOP BAR BUTTONS ══════════
+function topBack(){
+  // if on scan page, go home; if on home, do nothing special
+  if(document.getElementById('pgScan').style.display!=='none'){backHome();}
+}
+function topRefresh(){
+  if(document.getElementById('pgScan').style.display!=='none'){
+    // reload current roll's scan progress from cloud, then re-render
+    fbsLoadScans(function(m){
+      if(m){for(var k in m)SCANS[k]=m[k];saveScans();}
+      if(scanLPN){
+        scanItems.forEach(function(x){
+          var s=SCANS[sKey(scanLPN,x.code)];
+          if(s){x.scan=Math.min(s.n||0,x.qty);x.time=s.t||'';}
+        });
+        renderList();updatePhoto();
+      }
+      toast('Refreshed',false,900);
+    });
+  }else{
+    loadData();
+    refreshRolls(function(){toast('Refreshed',false,900);});
+  }
 }
 
 // ══════════ BOOT ══════════
