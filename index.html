@@ -549,12 +549,14 @@ function fcOlpnsInFileOrder(){
   return out;
 }
 function loadData(){
-  rows=[];
+  // read cache but never wipe working in-memory rows if the cache is empty/broken
+  var cached=[];
   try{
     var sr=localStorage.getItem('gp_rows');
-    if(sr)rows=JSON.parse(sr)||[];
-    fDate=localStorage.getItem('gp_fdate')||'';
+    if(sr)cached=JSON.parse(sr)||[];
+    var fd0=localStorage.getItem('gp_fdate');if(fd0)fDate=fd0;
   }catch(e){}
+  if(cached.length)rows=cached;
   applyDataUI();
   fbsLoadOrders(function(r,fd,ts){
     // NEW SESSION check: office re-imported a file -> drop stale local scan cache
