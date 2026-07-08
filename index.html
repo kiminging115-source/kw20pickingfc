@@ -91,6 +91,22 @@ body{background:var(--gray-bg);min-height:100vh;}
 .u-tbl td.q{background:#D4EDDA;font-weight:800;}
 .empty{font-size:12px;color:var(--gray-text);text-align:center;padding:20px 6px;border:1px dashed var(--gray-border);border-radius:6px;margin-top:8px;background:#fff;}
 
+/* ── ROLL COMPLETED MODAL ── */
+#doneModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1100;align-items:flex-start;justify-content:center;padding:110px 16px 16px;}
+#doneModal.on{display:flex;}
+.dm-box{background:#fff;border-radius:8px;max-width:560px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.35);}
+.dm-head{padding:14px 18px;border-bottom:1px solid var(--gray-border);font-size:15px;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;}
+.dm-body{padding:14px 18px 4px;}
+.dm-grid{display:flex;flex-wrap:wrap;gap:10px;}
+.dm-card{flex:1 1 calc(50% - 5px);min-width:0;display:flex;align-items:center;gap:12px;border:1px solid var(--gray-border);border-radius:8px;padding:10px 12px;}
+.dm-card.dm-wide{flex-basis:100%;}
+.dm-ico{width:48px;height:48px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dm-txt{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.dm-txt small{font-size:12px;color:var(--gray-text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dm-txt b{font-size:22px;font-weight:800;color:var(--dark);line-height:1.1;}
+.dm-confirm{display:block;width:calc(100% - 36px);margin:14px 18px 18px;background:#28A745;color:#fff;border:none;border-radius:6px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;}
+.dm-confirm:hover{background:#1E7E34;}
+
 /* ── MATCH ROLL MODAL ── */
 #rollModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:flex-start;justify-content:center;padding:120px 16px 16px;}
 #rollModal.on{display:flex;}
@@ -286,6 +302,22 @@ body{background:var(--gray-bg);min-height:100vh;}
   </div>
 </div>
 
+<!-- ROLL COMPLETED MODAL -->
+<div id="doneModal">
+  <div class="dm-box">
+    <div class="dm-head"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#28A745" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="1"/><path d="M6 7V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v3"/><path d="M9 14l2 2 4-4"/></svg> Roll Completed</div>
+    <div class="dm-body">
+      <div class="dm-grid">
+        <div class="dm-card"><div class="dm-ico" style="background:#F9A825"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 21V8l9-5 9 5v13"/><path d="M7 21v-8h10v8"/><path d="M7 16h10"/></svg></div><div class="dm-txt"><small>Gate</small><b id="dmGate">-</b></div></div>
+        <div class="dm-card"><div class="dm-ico" style="background:#28A745"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="8" y="14" width="7" height="7" rx="1"/></svg></div><div class="dm-txt"><small>Order</small><b id="dmOrder">-</b></div></div>
+        <div class="dm-card dm-wide"><div class="dm-ico" style="background:#1E88E5"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg></div><div class="dm-txt"><small>Route / Stop</small><b id="dmRoute">-</b></div></div>
+        <div class="dm-card dm-wide"><div class="dm-ico" style="background:#00838F"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg></div><div class="dm-txt"><small id="dmStoreName">-</small><b id="dmStore">-</b></div></div>
+      </div>
+    </div>
+    <button class="dm-confirm" onclick="confirmDone()">&#128190; Confirm</button>
+  </div>
+</div>
+
 <!-- MATCH ROLL MODAL -->
 <div id="rollModal">
   <div class="rm-box">
@@ -372,6 +404,20 @@ function fbsList(coll,cb){
   page(null);
 }
 
+
+// ---- ROUTE PLAN (Master Transport Plan / Loading sheet) ----
+function fbsSetRoute(list,rdate){
+  return fbsSet('wms_meta','route',{data:JSON.stringify(list||[]),rdate:rdate||'',ua:Date.now()});
+}
+function fbsGetRoute(cb){
+  fetch(FBS_BASE+'wms_meta/route?key='+FBS_KEY)
+    .then(function(r){return r.ok?r.json():Promise.reject();})
+    .then(function(j){
+      var m=fbsDec(j.fields);var l=[];
+      try{l=JSON.parse(m.data||'[]');}catch(e){}
+      cb(l,m.rdate||'');
+    }).catch(function(){cb(null,'');});
+}
 // ---- SCANS ----
 function fbsWriteScan(olpn,code,rec){
   fbsSet('wms_scans',olpn+'__'+code,{olpn:olpn,code:String(code),n:rec.n,t:rec.t||'',d:rec.d||'',dt:rec.dt||'',u:rec.u||''}).catch(function(){});
@@ -482,6 +528,24 @@ function doneBeep(){playBeep();setTimeout(playBeep,190);setTimeout(playBeep,380)
 // ══════════ STATE ══════════
 var USER='',rows=[],fDate='';
 var SCANS={},ROLLS={}; // ROLLS: olpn -> {olpn,roll,u,tot,done,st,et,d,route,store}
+var ROUTE_MAP={};      // "route|storeId" -> {gate,stop,storeName,wave}
+function loadRoutePlan(){
+  try{
+    var sr=localStorage.getItem('gp_route');
+    if(sr){var l=JSON.parse(sr)||[];_applyRoute(l);}
+  }catch(e){}
+  fbsGetRoute(function(l){
+    if(l&&l.length){
+      _applyRoute(l);
+      try{localStorage.setItem('gp_route',JSON.stringify(l));}catch(e){}
+      renderHome();
+    }
+  });
+}
+function _applyRoute(l){
+  ROUTE_MAP={};
+  (l||[]).forEach(function(x){ROUTE_MAP[String(x.route)+'|'+String(x.storeId)]={gate:x.gate,stop:x.stop,storeName:x.storeName,wave:x.wave};});
+}
 var cur=null; // {olpn,roll,items,meta}
 
 function loadScans(){try{SCANS=JSON.parse(localStorage.getItem('gp_scans')||'{}')||{};}catch(e){SCANS={};}}
@@ -575,6 +639,7 @@ function loadData(){
     fbsLoadScans(function(m){if(m){for(var k in m)SCANS[k]=m[k];saveScans();}});
     refreshRolls();
   });
+  loadRoutePlan();
 }
 function applyDataUI(){
   var has=rows.length>0;
@@ -617,7 +682,7 @@ function renderHome(){
       +'<div class="rl-olpn">'+esc(r.olpn)+'</div>'
       +'<div class="rl-tags"><span class="tag rt">&#128506; '+esc(r.route)+'/'+r.tot+'</span><span class="tag st">&#127970; '+esc(r.store)+'</span>'
       +(r.st?'<span class="tag tm">&#128337; '+esc(r.st)+'</span>':'')+'</div></div>'
-      +'<div class="rl-g">-</div>'
+      +'<div class="rl-g">'+(function(){var lk=ROUTE_MAP[String(r.route)+'|'+String(r.store)];return lk&&lk.gate?esc(lk.gate):'-';})()+'</div>'
       +'<div class="rl-q">'+r.done+' <small>/ '+r.tot+'</small></div>'
       +'</div>';
   });
@@ -852,9 +917,22 @@ function scanBarcode(code){
   }
   if(done>=tot){
     doneBeep();
-    toast('\u2714 Roll '+curRoll+' COMPLETE',false,2000);
-    setTimeout(backHome,1600);
+    showDoneModal(tot);
   }
+}
+
+function showDoneModal(totPcs){
+  var lk=ROUTE_MAP[String(meta.route)+'|'+String(meta.store)];
+  document.getElementById('dmGate').textContent=lk&&lk.gate?lk.gate:'-';
+  document.getElementById('dmOrder').textContent=totPcs;
+  document.getElementById('dmRoute').textContent=meta.route+' / '+(lk&&lk.stop?lk.stop:'-');
+  document.getElementById('dmStoreName').textContent=(lk&&lk.storeName)||'Store';
+  document.getElementById('dmStore').textContent=meta.store;
+  document.getElementById('doneModal').className='on';
+}
+function confirmDone(){
+  document.getElementById('doneModal').className='';
+  backHome();
 }
 function tapRow(i){
   var it=scanItems[i];
