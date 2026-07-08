@@ -178,6 +178,7 @@ body{background:var(--gray-bg);min-height:100vh;}
 #toast .tk{width:38px;height:38px;border-radius:50%;border:2.5px solid #4CAF50;color:#4CAF50;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
 #toast.err .tk{border-color:#E53935;color:#E53935;}
 #toast .tmsg{font-size:16px;font-weight:700;color:var(--dark);}
+#toast .tsub{font-size:17px;font-weight:800;color:var(--dark);margin-top:4px;}
 
 .nodata{background:#FFF6E0;border:1px solid #F5D98A;border-radius:8px;padding:18px;font-size:13px;font-weight:600;color:#7A5B00;line-height:1.8;}
 
@@ -909,6 +910,7 @@ function scanBarcode(code){
   // update roll record
   var done=0,tot=0;
   scanItems.forEach(function(x){done+=x.scan;tot+=x.qty;});
+  if(done<tot)toast(it.name,false,1100,it.scan+' / '+it.qty);
   var r=ROLLS[scanLPN];
   if(r){
     r.done=done;r.tot=tot;
@@ -1015,9 +1017,9 @@ function updatePhoto(){
 
 // ══════════ TOAST ══════════
 var _tt=null;
-function toast(msg,isErr,ms){
+function toast(msg,isErr,ms,sub){
   var t=document.getElementById('toast');
-  document.getElementById('toastMsg').textContent=msg;
+  document.getElementById('toastMsg').innerHTML='<div>'+esc(msg)+'</div>'+(sub?'<div class="tsub">'+esc(sub)+'</div>':'');
   t.className=isErr?'on err':'on';
   t.querySelector('.tk').innerHTML=isErr?'&#10005;':'&#10003;';
   clearTimeout(_tt);
